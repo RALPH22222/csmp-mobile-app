@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../Node Servers/csmp-server"
+		}
+	],
+	"settings": {}
+}

@@ -93,11 +93,11 @@ export const authApi = {
         return data;
     },
 
-    login: async (mobilePhone: string, password: string) => {
+    login: async (mobilePhone: string, password: string, isReturningUser: boolean = false) => {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobilePhone, password }),
+            body: JSON.stringify({ mobilePhone, password, isReturningUser }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || 'Login failed');

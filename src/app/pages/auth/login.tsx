@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, SafeAreaView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { authApi } from '@/api';
 import { useAuth } from '@/context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const [mobilePhone, setMobilePhone] = useState('');
@@ -10,8 +11,26 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState('');
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberedPhone, setRememberedPhone] = useState<string | null>(null);
   const router = useRouter();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const loadRememberedPhone = async () => {
+      const phone = await AsyncStorage.getItem('rememberedPhone');
+      if (phone) {
+        setRememberedPhone(phone);
+        setMobilePhone(phone);
+      }
+    };
+    loadRememberedPhone();
+  }, []);
+
+  const handleChangeAccount = async () => {
+    await AsyncStorage.removeItem('rememberedPhone');
+    setRememberedPhone(null);
+    setMobilePhone('');
+  };
 
   const handleMobilePhoneChange = (text: string) => {
     setMobilePhone(text.replace(/[^0-9]/g, ''));
@@ -25,8 +44,13 @@ export default function LoginScreen() {
     
     setIsLoading(true);
     try {
-      const response = await authApi.login(mobilePhone, password);
-      if (response.requireOtp) {
+      const isReturningUser = !!rememberedPhone;
+      const response = await authApi.login(mobilePhone, password, isReturningUser);
+      
+      if (isReturningUser && response.success && response.session && response.token) {
+        // Automatically stores session & routes to home via AuthContext
+        await login(response.token, response.session.refresh_token);
+      } else if (response.requireOtp) {
         setIsOtpStep(true);
       }
     } catch (error: any) {
@@ -46,6 +70,9 @@ export default function LoginScreen() {
     try {
       const response = await authApi.verifyLoginOtp(mobilePhone, otp);
       if (response.success && response.session && response.token) {
+        // Save the phone number for future login attempts
+        await AsyncStorage.setItem('rememberedPhone', mobilePhone);
+        
         // Automatically stores session & routes to home via AuthContext
         await login(response.token, response.session.refresh_token);
       }
@@ -78,15 +105,24 @@ export default function LoginScreen() {
           <View className="bg-surface rounded-lg p-md shadow-level-1 gap-md">
             <View className="gap-xs">
               <Text className="text-label-lg text-on-surface font-semibold">Mobile Phone Number</Text>
-              <TextInput
-                className="h-touch-target-min px-md bg-surface-container-lowest rounded-md text-body-md text-on-surface border border-outline-variant focus:border-primary"
-                placeholder="e.g. 09123456789"
-                placeholderTextColor="#6f797a"
-                value={mobilePhone}
-                onChangeText={handleMobilePhoneChange}
-                keyboardType="phone-pad"
-                maxLength={11}
-              />
+              {rememberedPhone ? (
+                <View className="flex-row items-center justify-between h-touch-target-min px-md bg-surface-container-lowest rounded-md border border-outline-variant">
+                  <Text className="text-body-md text-on-surface font-bold text-lg">{rememberedPhone}</Text>
+                  <Pressable onPress={handleChangeAccount} className="active:opacity-70 p-2">
+                    <Text className="text-primary text-label-md font-bold">Change Account</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <TextInput
+                  className="h-touch-target-min px-md bg-surface-container-lowest rounded-md text-body-md text-on-surface border border-outline-variant focus:border-primary"
+                  placeholder="e.g. 09123456789"
+                  placeholderTextColor="#6f797a"
+                  value={mobilePhone}
+                  onChangeText={handleMobilePhoneChange}
+                  keyboardType="phone-pad"
+                  maxLength={11}
+                />
+              )}
             </View>
 
             <View className="gap-xs">
