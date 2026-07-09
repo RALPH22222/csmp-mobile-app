@@ -7,7 +7,8 @@ type AuthContextType = {
   isLoggedIn: boolean;
   isLoading: boolean;
   profilePic: string | null;
-  login: (accessToken: string, refreshToken: string) => Promise<void>;
+  user: any;
+  login: (accessToken: string, refreshToken: string, userData?: any) => Promise<void>;
   logout: () => Promise<void>;
   updateProfilePic: (uri: string) => Promise<void>;
 };
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   isLoading: true,
   profilePic: null,
+  user: null,
   login: async () => {},
   logout: async () => {},
   updateProfilePic: async () => {},
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const segments = useSegments();
   const router = useRouter();
 
@@ -42,6 +45,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const storedProfilePic = await AsyncStorage.getItem('profile_pic');
         if (storedProfilePic) {
           setProfilePic(storedProfilePic);
+        }
+
+        const storedUser = await AsyncStorage.getItem('user_data');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         }
       } catch (e) {
         setIsLoggedIn(false);
@@ -74,18 +82,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setProfilePic(uri);
   };
 
-  const login = async (accessToken: string, refreshToken: string) => {
+  const login = async (accessToken: string, refreshToken: string, userData?: any) => {
     await TokenManager.setTokens(accessToken, refreshToken);
+    if (userData) {
+      await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+      setUser(userData);
+    }
     setIsLoggedIn(true);
   };
 
   const logout = async () => {
     await TokenManager.clearTokens();
+    await AsyncStorage.removeItem('user_data');
+    setUser(null);
     setIsLoggedIn(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, profilePic, login, logout, updateProfilePic }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, profilePic, user, login, logout, updateProfilePic }}>
       {children}
     </AuthContext.Provider>
   );

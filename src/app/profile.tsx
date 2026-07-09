@@ -9,7 +9,7 @@ import "../global.css";
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { logout, profilePic, updateProfilePic } = useAuth();
+  const { user, logout, profilePic, updateProfilePic } = useAuth();
 
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -50,7 +50,13 @@ export default function ProfileScreen() {
               <Ionicons name="camera" size={16} color="white" />
             </View>
           </Pressable>
-          <Text className="text-headline-md font-bold text-on-surface mt-4">Louise Klyde</Text>
+          <Text className="text-headline-md font-bold text-on-surface mt-4">
+            {user?.first_name || 'Louise'} {user?.last_name || 'Klyde'}
+          </Text>
+          <View className="flex-row items-center mt-2 bg-[#e0f7fa] px-3 py-1.5 rounded-full">
+            <Ionicons name="star" size={16} color="#006D77" />
+            <Text className="text-[#006D77] text-[13px] font-bold ml-1.5">Credit Score: {user?.did_credit_score || 0}</Text>
+          </View>
         </View>
 
         {/* Personal Info Section */}
@@ -58,7 +64,7 @@ export default function ProfileScreen() {
         <View className="bg-white rounded-2xl p-4 mb-6 shadow-level-1">
           <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
             <Text className="text-body-md text-on-surface-variant">Name</Text>
-            <Text className="text-body-md font-bold text-on-surface">Louise Klyde</Text>
+            <Text className="text-body-md font-bold text-on-surface">{user?.first_name || 'Louise'} {user?.last_name || 'Klyde'}</Text>
           </View>
           <View className="flex-row items-center justify-between py-3">
             <Text className="text-body-md text-on-surface-variant">Phone Number</Text>

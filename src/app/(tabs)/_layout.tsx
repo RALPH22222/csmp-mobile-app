@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Pressable, View, Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import "../../global.css";
 
@@ -11,7 +11,7 @@ const TabItem = ({ isFocused, onPress, iconName, label, family }: any) => {
         style={{
           paddingVertical: 8,
           paddingHorizontal: 12,
-          borderRadius: 16,
+          borderRadius: 100,
           overflow: "hidden",
           alignItems: "center",
           justifyContent: "center",
@@ -110,13 +110,13 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           label = "Pools";
           family = "MaterialCommunityIcons";
         }
-        if (route.name === "loans") {
-          iconName = "cash";
-          label = "Loans";
+        if (route.name === "history") {
+          iconName = "receipt";
+          label = "History";
         }
-        if (route.name === "wallets") {
-          iconName = "card";
-          label = "Wallets";
+        if (route.name === "wallet") {
+          iconName = "wallet";
+          label = "Wallet";
         }
 
         return (
@@ -142,8 +142,8 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="pools" />
-      <Tabs.Screen name="loans" />
-      <Tabs.Screen name="wallets" />
+      <Tabs.Screen name="history" />
+      <Tabs.Screen name="wallet" />
     </Tabs>
   );
 }

@@ -126,3 +126,50 @@ export const authApi = {
         return data;
     }
 };
+
+export const poolApi = {
+    getAllPools: async () => {
+        const response = await fetchWithAuth('/pools');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch pools');
+        return data;
+    },
+    getMyPools: async (userId: string) => {
+        const response = await fetchWithAuth(`/pools/user/${userId}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch my pools');
+        return data;
+    },
+    getPoolById: async (poolId: string) => {
+        const response = await fetchWithAuth(`/pools/${poolId}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch pool details');
+        return data;
+    },
+    createPool: async (poolData: {
+        name: string;
+        total_members: number;
+        max_members: number;
+        total_payout_amount: number;
+        cycle_duration_days: number;
+        organizer_id: string;
+        join_as_member?: boolean;
+    }) => {
+        const response = await fetchWithAuth('/pools', {
+            method: 'POST',
+            body: JSON.stringify(poolData),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to create pool');
+        return data;
+    },
+    joinPool: async (poolId: string, userId: string, sequence: number) => {
+        const response = await fetchWithAuth(`/pools/${poolId}/join`, {
+            method: 'POST',
+            body: JSON.stringify({ user_id: userId, sequence }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to join pool');
+        return data;
+    }
+};
