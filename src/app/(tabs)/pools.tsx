@@ -5,6 +5,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { poolApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import Skeleton from "../../components/Skeleton";
 import "../../global.css";
 
 export default function PoolsScreen() {
@@ -126,9 +127,32 @@ export default function PoolsScreen() {
 
         {/* Pool List */}
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#006D77" />
-          </View>
+          <ScrollView className="flex-1 px-6 mt-4" showsVerticalScrollIndicator={false}>
+            {[1, 2, 3, 4].map((i) => (
+              <View key={i} className="bg-white rounded-[20px] p-[18px] mb-3.5 border border-[#f0f2f2]">
+                <View className="flex-row justify-between items-start mb-3.5">
+                  <View className="flex-row items-center flex-1 pr-2">
+                    <Skeleton className="w-12 h-12 rounded-[14px] mr-3" />
+                    <View className="flex-1">
+                      <Skeleton className="h-4 w-3/4 mb-2" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </View>
+                  </View>
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </View>
+                <View className="flex-row justify-between items-center rounded-[12px] p-3 border border-[#e0f7fa] bg-[#f7fbfb]">
+                  <View>
+                    <Skeleton className="h-3 w-16 mb-1" />
+                    <Skeleton className="h-5 w-20" />
+                  </View>
+                  <View className="items-end">
+                    <Skeleton className="h-3 w-16 mb-1" />
+                    <Skeleton className="h-5 w-20" />
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
         ) : (
           <ScrollView
             className="flex-1"

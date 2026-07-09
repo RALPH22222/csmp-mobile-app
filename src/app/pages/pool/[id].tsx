@@ -10,6 +10,7 @@ import { useState, useCallback } from "react";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 import { poolApi } from "../../../api";
 import { useAuth } from "../../../context/AuthContext";
+import Skeleton from "../../../components/Skeleton";
 import "../../../global.css";
 
 
@@ -63,8 +64,26 @@ export default function PoolDetailScreen() {
 
   if (isLoading || !pool) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#006D77" />
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="px-5 py-3 border-b border-[#f0f2f2] flex-row items-center justify-between">
+          <Skeleton className="w-10 h-10 rounded-full" />
+          <View className="flex-row items-center">
+            <Skeleton className="w-20 h-4 mr-3" />
+            <Skeleton className="w-10 h-10 rounded-full" />
+          </View>
+        </View>
+        <ScrollView className="flex-1 bg-[#f7f9f9]" contentContainerStyle={{ alignItems: 'center', paddingTop: 32, paddingHorizontal: 20 }}>
+          <Skeleton className="w-3/4 h-8 mb-8" />
+          <Skeleton className="w-[290px] h-[290px] rounded-full mb-10" />
+          <Skeleton className="w-48 h-6 mb-2" />
+          <Skeleton className="w-64 h-4 mb-8" />
+          <Skeleton className="w-full h-14 rounded-[16px] mb-3" />
+          <Skeleton className="w-full h-14 rounded-[16px] mb-6" />
+          <View className="w-full mb-6">
+            <Skeleton className="w-32 h-6 mb-4" />
+            <Skeleton className="w-full h-32 rounded-[16px]" />
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
