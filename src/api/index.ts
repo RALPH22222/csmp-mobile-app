@@ -1,8 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator/Web
-const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000/api' : 'http://localhost:3000/api';
+import { API_BASE_URL } from '@env'; 
 
 export const TokenManager = {
     setTokens: async (accessToken: string, refreshToken: string) => {
