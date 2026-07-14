@@ -29,10 +29,10 @@ BayanIpon is built with a heavily modular architecture separated across four dis
 
 <div align="center">
 
-[![Smart Contract](https://img.shields.io/badge/Repo_1-Smart_Contract-ea4b34?style=for-the-badge&logo=rust&logoColor=white)](#1-smart-contract-repo)
-[![Backend API](https://img.shields.io/badge/Repo_2-Backend_API-339933?style=for-the-badge&logo=node.js&logoColor=white)](#2-backend-api-repo)
-[![Mobile App](https://img.shields.io/badge/Repo_3-Mobile_App-61DAFB?style=for-the-badge&logo=react&logoColor=black)](#3-mobile-app-repo)
-[![Admin Web Dashboard](https://img.shields.io/badge/Repo_4-Admin_Dashboard-FF5D01?style=for-the-badge&logo=astro&logoColor=white)](#4-admin-web-dashboard-repo)
+[![Smart Contract](https://img.shields.io/badge/Repo_1-Smart_Contract-ea4b34?style=for-the-badge&logo=rust&logoColor=white)](https://github.com/RALPH22222/contract)
+[![Backend API](https://img.shields.io/badge/Repo_2-Backend_API-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://github.com/RALPH22222/csmp-backend)
+[![Mobile App](https://img.shields.io/badge/Repo_3-Mobile_App-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://github.com/RALPH22222/csmp-mobile-app)
+[![Admin Web Dashboard](https://img.shields.io/badge/Repo_4-Admin_Dashboard-FF5D01?style=for-the-badge&logo=astro&logoColor=white)](https://github.com/RALPH22222/csmp-web-admin)
 
 </div>
 
