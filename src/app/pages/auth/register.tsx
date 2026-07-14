@@ -138,7 +138,11 @@ export default function RegisterScreen() {
     }
     if (selectedDate) {
       setDate(selectedDate);
-      setDateOfBirth(selectedDate.toLocaleDateString());
+      // Format as YYYY-MM-DD to ensure it is correctly parsed by the backend
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      setDateOfBirth(`${year}-${month}-${day}`);
     }
   };
 
