@@ -1,56 +1,100 @@
-# Welcome to your Expo app 👋
+<div align="center">
+  <img src="https://stellar.org/favicon.ico" width="80" alt="Stellar Logo" />
+  <h1>BayanIpon</h1>
+  <p><strong>A Composable Stellar Micro-Finance Protocol</strong></p>
+  <p><em>Digitizing the traditional Filipino "Paluwagan" and unlocking zero-collateral microlending for the unbanked.</em></p>
+</div>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+---
 
-## Get started
+## 🚀 Elevator Pitch
 
-1. Install dependencies
+**BayanIpon** digitizes the traditional Filipino informal group savings system (*Paluwagan*) and replaces predatory "5-6" loans (240% APR) by leveraging Soroban smart contracts. We serve unbanked wet market vendors by acting as a trustless escrow, facilitating zero-fee transactions, and generating on-chain credit scores that unlock fair, decentralized micro-lending.
 
-   ```bash
-   npm install
-   ```
+## ⚠️ The Problem
 
-2. Start the app
+- **Financial Exclusion:** 76% of adults in the Philippines remain unbanked or underbanked.
+- **Predatory Lending:** Vendors rely heavily on "5-6" loans, which charge a predatory 20% monthly interest rate (240% APR) just for daily operational liquidity.
+- **Insecure Savings:** The traditional *Paluwagan* relies on manual cash boxes managed by a single individual, leading to human error, theft, and lack of transparency. No formal credit history is generated from these responsible savings habits.
 
-   ```bash
-   npx expo start
-   ```
+## 💡 The Solution
 
-In the output, you'll find options to open the app in a
+A mobile-first, decentralized micro-finance platform utilizing **Soroban Smart Contracts**, **SEP-24 Anchors** for local fiat off-ramps (e.g., GCash), and **Fee-Bump Transactions**. BayanIpon provides a completely zero-fee, Web2-like experience for users while generating immutable on-chain credit profiles.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🏗️ System Architecture
 
-## Get a fresh project
+BayanIpon is built with a heavily modular architecture separated across four distinct repositories. Choose a component below to explore its codebase:
 
-When you're ready, run:
+<div align="center">
 
-```bash
-npm run reset-project
-```
+[![Smart Contract](https://img.shields.io/badge/Repo_1-Smart_Contract-ea4b34?style=for-the-badge&logo=rust&logoColor=white)](#1-smart-contract-repo)
+[![Backend API](https://img.shields.io/badge/Repo_2-Backend_API-339933?style=for-the-badge&logo=node.js&logoColor=white)](#2-backend-api-repo)
+[![Mobile App](https://img.shields.io/badge/Repo_3-Mobile_App-61DAFB?style=for-the-badge&logo=react&logoColor=black)](#3-mobile-app-repo)
+[![Admin Web Dashboard](https://img.shields.io/badge/Repo_4-Admin_Dashboard-FF5D01?style=for-the-badge&logo=astro&logoColor=white)](#4-admin-web-dashboard-repo)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+</div>
 
-### Other setup steps
+---
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 1. Smart Contract Repo
+**Tech Stack:** Stellar Soroban / Rust
 
-## Learn more
+The heart of BayanIpon's decentralized trust layer. These Soroban contracts enforce the rules of the *Paluwagan* and handle all value transfers without intermediaries.
+- **Trustless Escrow:** Securely locks pooled funds from participants. Payouts are automatically distributed to the scheduled recipient at the end of each cycle without manual intervention.
+- **On-Chain Credit Scoring:** Tracks user participation, evaluating on-time contributions versus defaults. Good behavior dynamically upgrades an on-chain soulbound token (SBT) representing the user's creditworthiness.
+- **Micro-Lending Protocol:** Users with high on-chain credit scores can borrow from a decentralized liquidity pool at fair, algorithmically defined interest rates, completely bypassing predatory 5-6 lenders.
+- **Role-Based Access Control:** Utilizes multi-sig and distinct admin roles to allow community organizers to deploy pools while strictly preventing rug-pulls or unauthorized fund extraction.
 
-To learn more about developing your project with Expo, look at the following resources:
+### 2. Backend API Repo
+**Tech Stack:** Node.js / Express / TypeScript / Supabase PostgreSQL
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The bridge between the blockchain and the Web2 experience, designed to abstract away crypto complexities for non-technical users.
+- **Fee-Bump Transaction Sponsoring:** Wraps user transactions and pays the Stellar network fees via a sponsor account. Users never have to buy or hold XLM for gas.
+- **Off-Chain Indexing & State:** Mirrors blockchain state into Supabase for lightning-fast UI queries (like user profiles, historical transactions, and active pools) without spamming the Stellar RPC.
+- **SEP-24 Anchor Orchestration:** Integrates with local Stellar Anchors to enable seamless fiat-to-crypto bridging, allowing vendors to cash-in and cash-out directly via GCash or Maya.
+- **Cron Jobs & Notifications:** Manages automated daily tasks, such as evaluating pool cycles, triggering payouts, and sending SMS/Push reminders for daily contributions.
 
-## Join the community
+### 3. Mobile App Repo
+**Tech Stack:** React Native / Expo
 
-Join our community of developers creating universal apps.
+The primary touchpoint for our end-users (market vendors). Designed for low-end smartphones with an emphasis on extreme simplicity.
+- **Web2-like UX:** Hides seed phrases and blockchain jargon. Users interact with the app just like a traditional mobile banking or e-wallet application.
+- **Non-Custodial Key Management:** Automatically generates and securely stores keypairs locally in the device’s secure enclave, signing transactions transparently in the background.
+- **Paluwagan Dashboard:** Provides a clear, visual overview of active saving pools, daily contribution targets, current streaks, and the date of their upcoming payout.
+- **1-Click Cash-In/Out:** A deeply integrated gateway that uses the SEP-24 backend services to convert physical cash or e-wallet PHP directly into digital assets locked in Soroban.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 4. Admin Web Dashboard Repo
+**Tech Stack:** Astro / Web
+
+The control center for protocol operators and local community managers to oversee platform health and risk.
+- **Protocol Analytics (TVL):** Real-time aggregation of Total Value Locked, active pools, participant demographics, and default rates across the entire ecosystem.
+- **Risk & Treasury Management:** Monitors the micro-lending liquidity pools, tracks interest accruals, and provides controls to adjust platform parameters (e.g., minimum credit score requirements).
+- **KYC & User Management:** Dashboard for reviewing user identities, approving community organizers, and handling disputes.
+- **Audit Trails:** Provides transparent, easily readable logs combining off-chain backend events with immutable on-chain Soroban transactions.
+
+---
+
+## 🔄 System Flow: Joining & Contributing to a Pool
+
+To understand how these repositories interact in production, let's walk through a core user action: **A vendor makes their daily Paluwagan contribution.**
+
+1. **User Intent (Mobile App):** 
+   The vendor opens the **Mobile App** and taps "Pay Daily Contribution". The app constructs a Soroban smart contract invocation locally, signs it using the securely stored local keypair, and sends the payload to the Backend.
+   
+2. **Gas Abstraction (Backend API):** 
+   The **Backend API** receives the signed transaction. Instead of submitting it directly, it wraps the payload in a Stellar *Fee-Bump Transaction*. The backend signs this wrapper with the platform's sponsor wallet, paying the network fee so the user doesn't have to.
+
+3. **Settlement & Escrow (Smart Contract):** 
+   The transaction is submitted to the Stellar network. The **Soroban Smart Contract** executes the logic: it verifies the user's signature, deducts the contribution amount (e.g., USDC) from the user's wallet, locks it in the pool's escrow, and records the successful payment on-chain.
+
+4. **Event Indexing (Backend API):** 
+   The **Backend API** listens for the successful blockchain event. It updates the Supabase database to reflect the new pool balance, credits the user's contribution streak, and recalculates their off-chain credit score metric.
+
+5. **Real-Time Reflection (Mobile App & Admin Dashboard):** 
+   - The **Mobile App** receives a success push notification, and the UI updates to show the daily requirement as fulfilled.
+   - The **Admin Web Dashboard** simultaneously updates its analytics, reflecting the increase in platform TVL and logging the transaction for audit purposes.
+
+---
+*Built with ❤️ for the Stellar Blockchain Hackathon.*
