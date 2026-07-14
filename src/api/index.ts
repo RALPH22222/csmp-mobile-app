@@ -57,6 +57,17 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
     return response;
 };
 
+const extractErrorMessage = (data: any, fallback: string) => {
+    let errorMsg = data.message || data.error || fallback;
+    if (typeof errorMsg === 'object') {
+        errorMsg = errorMsg.message || errorMsg.details || JSON.stringify(errorMsg);
+    }
+    if (errorMsg === '{}' || errorMsg === '[object Object]') {
+        return fallback;
+    }
+    return errorMsg;
+};
+
 export const authApi = {
     register: async (userData: any) => {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -65,29 +76,31 @@ export const authApi = {
             body: JSON.stringify(userData),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Registration failed');
+        if (!response.ok) {
+            throw new Error(extractErrorMessage(data, 'An unknown error occurred during registration.'));
+        }
         return data;
     },
 
-    verifyOtp: async (mobilePhone: string, otp: string) => {
+    verifyOtp: async (email: string, otp: string) => {
         const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobilePhone, otp }),
+            body: JSON.stringify({ email, otp }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'OTP Verification failed');
+        if (!response.ok) throw new Error(extractErrorMessage(data, 'OTP Verification failed'));
         return data;
     },
 
-    resendOtp: async (mobilePhone: string) => {
+    resendOtp: async (email: string) => {
         const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobilePhone }),
+            body: JSON.stringify({ email }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Resend OTP failed');
+        if (!response.ok) throw new Error(extractErrorMessage(data, 'Resend OTP failed'));
         return data;
     },
 
@@ -98,7 +111,7 @@ export const authApi = {
             body: JSON.stringify({ mobilePhone, password, isReturningUser }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Login failed');
+        if (!response.ok) throw new Error(extractErrorMessage(data, 'Login failed'));
         return data;
     },
 
@@ -168,6 +181,42 @@ export const poolApi = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to join pool');
+        return data;
+    },
+    contribute: async (poolId: string, userId: string) => {
+        const response = await fetchWithAuth(`/pools/${poolId}/contribute`, {
+            method: 'POST',
+            body: JSON.stringify({ user_id: userId }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to contribute');
+        return data;
+    },
+    payout: async (poolId: string, amount: number, userId: string) => {
+        const response = await fetchWithAuth(`/pools/${poolId}/payout`, {
+            method: 'POST',
+            body: JSON.stringify({ amount, user_id: userId })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to process payout');
+        return data;
+    }
+};
+
+export const paymayaApi = {
+    getBalance: async () => {
+        const response = await fetchWithAuth('/paymaya/balance');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch balance');
+        return data;
+    }
+};
+
+export const transactionApi = {
+    getHistory: async () => {
+        const response = await fetchWithAuth('/transactions/history');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch history');
         return data;
     }
 };

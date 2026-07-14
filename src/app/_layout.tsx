@@ -7,6 +7,8 @@ import { useRouter } from 'expo-router';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider } from '../context/AuthContext';
+import CustomAlert from '../components/CustomAlert';
+import { CustomAlert as AlertService } from '../utils/Alert';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,23 +27,23 @@ export default function TabLayout() {
       console.log('Query params:', queryParams);
       
       if (path === 'payment/success') {
-        Alert.alert(
+        AlertService.success(
           'Payment Successful', 
-          'Your payment has been processed successfully.',
-          [{ text: 'OK', onPress: () => router.push('/') }]
+          'Your payment has been processed successfully.'
         );
+        router.push('/');
       } else if (path === 'payment/failure') {
-        Alert.alert(
+        AlertService.error(
           'Payment Failed', 
-          'Your payment was not completed. Please try again.',
-          [{ text: 'OK', onPress: () => router.push('/pages/cash-in') }]
+          'Your payment was not completed. Please try again.'
         );
+        router.push('/pages/cash-in');
       } else if (path === 'payment/cancel') {
-        Alert.alert(
+        AlertService.warning(
           'Payment Cancelled', 
-          'You cancelled the payment process.',
-          [{ text: 'OK', onPress: () => router.push('/pages/cash-in') }]
+          'You cancelled the payment process.'
         );
+        router.push('/pages/cash-in');
       }
     };
 
@@ -62,6 +64,7 @@ export default function TabLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <AnimatedSplashOverlay />
+        <CustomAlert />
         <Stack screenOptions={{ headerShown: false }} />
       </AuthProvider>
     </ThemeProvider>

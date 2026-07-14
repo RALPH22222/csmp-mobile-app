@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Switch } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Switch, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { CustomAlert } from "../../utils/Alert";
 import { poolApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import "../../global.css";
@@ -18,6 +19,15 @@ export default function CreatePoolScreen() {
   const [joinAsMember, setJoinAsMember] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
+  const [showCyclePicker, setShowCyclePicker] = useState(false);
+
+  const CYCLE_OPTIONS = [
+    { label: "Weekly", value: "7" },
+    { label: "Bi-Weekly", value: "14" },
+    { label: "Monthly", value: "30" },
+  ];
+
+  const selectedCycleLabel = CYCLE_OPTIONS.find(c => c.value === cycleDuration)?.label || "Select Cycle";
 
   const cycleDurationAmount = totalPayoutAmount && maxMembers && parseInt(maxMembers, 10) > 0
     ? Math.floor(parseInt(totalPayoutAmount, 10) / parseInt(maxMembers, 10))
@@ -37,7 +47,7 @@ export default function CreatePoolScreen() {
     }
     
     if (!user?.id) {
-      Alert.alert("Error", "You must be logged in to create a pool.");
+      CustomAlert.error("Error", "You must be logged in to create a pool.");
       return;
     }
 
@@ -52,12 +62,10 @@ export default function CreatePoolScreen() {
         organizer_id: user.id,
         join_as_member: joinAsMember,
       });
-      
-      Alert.alert("Success", "Pool created and pending review!", [
-        { text: "OK", onPress: () => router.back() }
-      ]);
+      CustomAlert.success("Success", "Pool created and pending review!");
+      router.back();
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to create pool");
+      CustomAlert.error("Error", err.message || "Failed to create pool");
     } finally {
       setIsLoading(false);
     }
@@ -103,15 +111,16 @@ export default function CreatePoolScreen() {
               {errors.maxMembers && <Text className="text-red-500 text-[11px] mt-1">{errors.maxMembers}</Text>}
             </View>
             <View className="flex-1 ml-2">
-              <Text className="text-[13px] font-semibold text-[#6f797a] mb-2">Cycle (Days)</Text>
-              <TextInput
-                placeholder="e.g. 7"
-                keyboardType="numeric"
-                value={cycleDuration}
-                onChangeText={(text) => { setCycleDuration(text); setErrors({ ...errors, cycleDuration: null }); }}
-                className={`bg-[#f7f9f9] border ${errors.cycleDuration ? 'border-red-500' : 'border-[#e0e0e0]'} rounded-[12px] px-4 py-3 text-[15px] text-[#003840]`}
-                placeholderTextColor="#9aa4a5"
-              />
+              <Text className="text-[13px] font-semibold text-[#6f797a] mb-2">Cycle Duration</Text>
+              <TouchableOpacity
+                onPress={() => setShowCyclePicker(true)}
+                className={`bg-[#f7f9f9] border ${errors.cycleDuration ? 'border-red-500' : 'border-[#e0e0e0]'} rounded-[12px] px-4 py-3.5 flex-row items-center justify-between`}
+              >
+                <Text className={`text-[15px] ${cycleDuration ? 'text-[#003840]' : 'text-[#9aa4a5]'}`}>
+                  {selectedCycleLabel}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color="#6f797a" />
+              </TouchableOpacity>
               {errors.cycleDuration && <Text className="text-red-500 text-[11px] mt-1">{errors.cycleDuration}</Text>}
             </View>
           </View>
@@ -167,6 +176,37 @@ export default function CreatePoolScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Cycle Duration Dropdown Modal */}
+      <Modal visible={showCyclePicker} transparent={true} animationType="fade">
+        <TouchableOpacity 
+          className="flex-1 justify-center items-center bg-black/50 px-6"
+          activeOpacity={1}
+          onPress={() => setShowCyclePicker(false)}
+        >
+          <View className="bg-white rounded-[20px] w-full p-4 overflow-hidden shadow-lg">
+            <Text className="text-[16px] font-bold text-[#003840] mb-4 text-center">Select Cycle Duration</Text>
+            {CYCLE_OPTIONS.map((option, index) => (
+              <TouchableOpacity
+                key={option.value}
+                onPress={() => {
+                  setCycleDuration(option.value);
+                  setErrors({ ...errors, cycleDuration: null });
+                  setShowCyclePicker(false);
+                }}
+                className={`py-4 flex-row justify-between items-center ${index !== CYCLE_OPTIONS.length - 1 ? 'border-b border-[#f0f2f2]' : ''}`}
+              >
+                <Text className={`text-[16px] ${cycleDuration === option.value ? 'font-bold text-[#006D77]' : 'text-[#003840]'}`}>
+                  {option.label}
+                </Text>
+                {cycleDuration === option.value && (
+                  <Ionicons name="checkmark-circle" size={20} color="#006D77" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -4,7 +4,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { CustomAlert } from "../../../utils/Alert";
 
 export default function LoginScreen() {
   const [mobilePhone, setMobilePhone] = useState("");
@@ -50,7 +50,7 @@ export default function LoginScreen() {
       router.push("/(tabs)");
     }
     if (!mobilePhone || !password) {
-      Alert.alert("Error", "Please enter your phone number and password");
+      CustomAlert.error("Error", "Please enter your phone number and password");
       return;
     }
 
@@ -75,7 +75,7 @@ export default function LoginScreen() {
         setIsOtpStep(true);
       }
     } catch (error: any) {
-      Alert.alert("Login Failed", error.message || "Invalid credentials");
+      CustomAlert.error("Login Failed", error.message || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +83,7 @@ export default function LoginScreen() {
 
   const handleOtpSubmit = async () => {
     if (!otp) {
-      Alert.alert("Error", "Please enter the OTP");
+      CustomAlert.error("Error", "Please enter the OTP");
       return;
     }
 
@@ -98,7 +98,7 @@ export default function LoginScreen() {
         await login(response.token, response.session.refresh_token, response.user);
       }
     } catch (error: any) {
-      Alert.alert("Verification Failed", error.message || "Invalid OTP");
+      CustomAlert.error("Verification Failed", error.message || "Invalid OTP");
     } finally {
       setIsLoading(false);
     }

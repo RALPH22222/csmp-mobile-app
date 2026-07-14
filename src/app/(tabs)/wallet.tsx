@@ -1,71 +1,40 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Skeleton from "../../components/Skeleton";
 import "../../global.css";
-
-const MOCK_TRANSACTIONS = [
-  {
-    id: "1",
-    title: "Top Up via Bank Transfer",
-    date: "Jul 9, 2026, 10:30 AM",
-    amount: "+₱5,000.00",
-    type: "in",
-    icon: "card",
-    color: "#006D77",
-  },
-  {
-    id: "2",
-    title: "Transfer to John Doe",
-    date: "Jul 8, 2026, 3:15 PM",
-    amount: "-₱1,250.00",
-    type: "out",
-    icon: "person",
-    color: "#E53E3E",
-  },
-  {
-    id: "3",
-    title: "Withdraw to Bank",
-    date: "Jul 6, 2026, 9:00 AM",
-    amount: "-₱2,000.00",
-    type: "out",
-    icon: "business",
-    color: "#E53E3E",
-  },
-  {
-    id: "4",
-    title: "Cashback Reward",
-    date: "Jul 5, 2026, 2:45 PM",
-    amount: "+₱50.00",
-    type: "in",
-    icon: "gift",
-    color: "#006D77",
-  },
-  {
-    id: "5",
-    title: "Bill Payment - Electric",
-    date: "Jul 1, 2026, 8:20 AM",
-    amount: "-₱1,850.50",
-    type: "out",
-    icon: "flash",
-    color: "#E53E3E",
-  },
-];
+import { paymayaApi } from "../../api";
 
 export default function WalletsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [balance, setBalance] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       setIsBalanceVisible(false);
       setIsLoading(true);
-      const timer = setTimeout(() => setIsLoading(false), 1000);
-      return () => clearTimeout(timer);
+      
+      const fetchBalance = async () => {
+        try {
+          const res = await paymayaApi.getBalance();
+          setBalance(res.balance);
+        } catch (error) {
+          console.error("Failed to fetch balance", error);
+          setBalance(0);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchBalance();
+      
+      return () => {};
     }, []),
   );
 
@@ -129,7 +98,7 @@ export default function WalletsScreen() {
                 </View>
                 <View className="flex-row items-center mb-2">
                   <Text className="text-white text-[40px] font-bold leading-[48px] tracking-[-0.02em]">
-                    {isBalanceVisible ? "₱12,500.00" : "••••••••"}
+                    {isBalanceVisible ? `₱${(balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : "••••••••"}
                   </Text>
                 </View>
               </>
@@ -156,7 +125,7 @@ export default function WalletsScreen() {
             </>
           ) : (
             <>
-              <ActionItem icon="arrow-down" label="Top Up" />
+              <ActionItem icon="arrow-down" label="Top Up" onPress={() => router.push("/pages/cash-in")} />
               <ActionItem icon="paper-plane" label="Transfer" />
               <ActionItem icon="cash-outline" label="Withdraw" />
             </>
@@ -189,44 +158,12 @@ export default function WalletsScreen() {
                 </View>
               ))
             ) : (
-              MOCK_TRANSACTIONS.map((tx, index) => (
-                <Pressable
-                  key={tx.id}
-                  className={`flex-row items-center justify-between p-4 active:opacity-70 ${index !== MOCK_TRANSACTIONS.length - 1 ? "border-b border-gray-50" : ""}`}
-                >
-                  <View className="flex-row items-center flex-1 pr-4">
-                    <View
-                      className="w-12 h-12 rounded-full items-center justify-center mr-4"
-                      style={{ backgroundColor: `${tx.color}15` }}
-                    >
-                      <Ionicons
-                        name={tx.icon as any}
-                        size={24}
-                        color={tx.color}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text
-                        className="text-body-lg font-bold text-on-surface"
-                        numberOfLines={1}
-                      >
-                        {tx.title}
-                      </Text>
-                      <Text className="text-label-sm text-on-surface-variant mt-0.5">
-                        {tx.date}
-                      </Text>
-                    </View>
-                  </View>
-                  <View className="items-end">
-                    <Text
-                      className="text-body-lg font-bold"
-                      style={{ color: tx.type === "in" ? "#006D77" : "#1b1c1c" }}
-                    >
-                      {tx.amount}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))
+              <View className="p-8 items-center justify-center">
+                <Ionicons name="receipt-outline" size={48} color="#9CA3AF" />
+                <Text className="text-body-lg text-on-surface-variant mt-4 text-center">
+                  No recent transactions
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -235,9 +172,9 @@ export default function WalletsScreen() {
   );
 }
 
-function ActionItem({ icon, label }: { icon: string; label: string }) {
+function ActionItem({ icon, label, onPress }: { icon: string; label: string; onPress?: () => void }) {
   return (
-    <Pressable className="items-center active:opacity-70 w-[30%]">
+    <Pressable className="items-center active:opacity-70 w-[30%]" onPress={onPress}>
       <View className="w-14 h-14 bg-white rounded-full items-center justify-center mb-2 border border-gray-100 shadow-sm">
         <Ionicons name={icon as any} size={24} color="#00535b" />
       </View>

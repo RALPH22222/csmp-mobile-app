@@ -6,13 +6,13 @@ import {
   Pressable,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Modal,
   ActivityIndicator,
 } from "react-native";
 import { WebView, WebViewNavigation } from "react-native-webview";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { CustomAlert } from "../../utils/Alert";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
@@ -87,22 +87,20 @@ export default function CashInScreen() {
       const data = await response.json();
 
       if (data.status === "completed") {
-        Alert.alert(
+        CustomAlert.success(
           "Payment Successful",
-          `₱${formatNumber(data.amount)} has been added to your account.`,
-          [{ text: "OK", onPress: () => router.back() }],
+          `₱${formatNumber(data.amount)} has been added to your account.`
         );
+        router.back();
       } else if (data.status === "failed") {
-        Alert.alert(
+        CustomAlert.error(
           "Payment Failed",
-          "Your payment was not completed. Please try again.",
-          [{ text: "OK" }],
+          "Your payment was not completed. Please try again."
         );
       } else if (data.status === "pending") {
-        Alert.alert(
+        CustomAlert.info(
           "Payment Pending",
-          "Your payment is still being processed. Please check back later.",
-          [{ text: "OK" }],
+          "Your payment is still being processed. Please check back later."
         );
       }
     } catch (error) {
@@ -130,9 +128,9 @@ export default function CashInScreen() {
     }
     if (url.includes(RESULT_PATHS.failure)) {
       closeWebview();
-      Alert.alert(
+      CustomAlert.error(
         "Payment Failed",
-        "Your payment was not completed. Please try again.",
+        "Your payment was not completed. Please try again."
       );
       return;
     }
@@ -155,12 +153,12 @@ export default function CashInScreen() {
     const numericAmount = parseFloat(amount);
 
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid amount.");
+      CustomAlert.error("Invalid Amount", "Please enter a valid amount.");
       return;
     }
 
     if (!isLoggedIn || !user?.id) {
-      Alert.alert("Error", "You are not logged in. Please login again.");
+      CustomAlert.error("Error", "You are not logged in. Please login again.");
       return;
     }
 
@@ -170,7 +168,7 @@ export default function CashInScreen() {
       const token = await getAuthToken();
 
       if (!token) {
-        Alert.alert("Error", "You are not logged in. Please login again.");
+        CustomAlert.error("Error", "You are not logged in. Please login again.");
         setIsLoading(false);
         return;
       }
@@ -220,9 +218,9 @@ export default function CashInScreen() {
       }
     } catch (error: any) {
       console.error("Cash In Error:", error);
-      Alert.alert(
+      CustomAlert.error(
         "Error",
-        error.message || "Failed to process cash-in. Please try again.",
+        error.message || "Failed to process cash-in. Please try again."
       );
       setIsLoading(false);
     }

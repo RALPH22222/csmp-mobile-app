@@ -4,11 +4,12 @@ import {
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
-import { Image, ScrollView, Text, TouchableOpacity, View, ActivityIndicator, Alert, Modal } from "react-native";
+import { Image, ScrollView, Text, TouchableOpacity, View, ActivityIndicator, Modal, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 import { poolApi } from "../../../api";
+import { CustomAlert } from "../../../utils/Alert";
 import { useAuth } from "../../../context/AuthContext";
 import Skeleton from "../../../components/Skeleton";
 import "../../../global.css";
@@ -23,7 +24,10 @@ export default function PoolDetailScreen() {
   const [pool, setPool] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const fetchPool = async () => {
     try {
@@ -45,7 +49,7 @@ export default function PoolDetailScreen() {
 
   const handleJoin = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "You must be logged in to join.");
+      CustomAlert.error("Error", "You must be logged in to join.");
       return;
     }
     try {
@@ -53,12 +57,52 @@ export default function PoolDetailScreen() {
       // Determine next sequence based on current members or default to 1
       const seq = pool?.pool_members?.length ? pool.pool_members.length + 1 : 1;
       await poolApi.joinPool(id as string, user.id, seq);
-      Alert.alert("Success", "You have joined the pool!");
+      CustomAlert.success("Success", "You have joined the pool!");
       fetchPool();
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to join pool.");
+      CustomAlert.error("Error", err.message || "Failed to join pool.");
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleContribute = async () => {
+    if (!user?.id) return;
+    try {
+      setIsProcessing(true);
+      await poolApi.contribute(id as string, user.id);
+      CustomAlert.success("Success", "Contribution paid successfully!");
+      fetchPool();
+    } catch (err: any) {
+      CustomAlert.error("Error", err.message || "Failed to pay contribution.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    const amount = Number(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      CustomAlert.error("Error", "Please enter a valid amount greater than 0.");
+      return;
+    }
+    if (amount > currentAmount) {
+      CustomAlert.error("Error", `Amount cannot exceed the funded amount (₱${currentAmount.toLocaleString()}).`);
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      // We pass the amount if the API supports it in the future, currently it just processes the pool's payout
+      await poolApi.payout(id as string, amount, user.id);
+      CustomAlert.success("Success", "Withdrawal processed successfully!");
+      setWithdrawModalVisible(false);
+      setWithdrawAmount("");
+      fetchPool();
+    } catch (err: any) {
+      CustomAlert.error("Error", err.message || "Failed to process withdrawal.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -92,8 +136,11 @@ export default function PoolDetailScreen() {
   const currentMembers = pool.pool_members?.length || 0;
   const maxMembers = pool.max_members || 1;
   
-  // Calculate total amount contributed by all members
+  // Calculate total amount contributed by all members (for reference)
   const totalContributed = pool.pool_members?.reduce((sum: number, m: any) => sum + (Number(m.total_contributed) || 0), 0) || 0;
+  
+  // Pool's current actual balance
+  const currentAmount = Number(pool.current_amount) || 0;
   const targetPoolAmount = Number(pool.total_payout_amount) || 1;
   
   // Dynamic contribution amount depends on current members
@@ -108,8 +155,8 @@ export default function PoolDetailScreen() {
   const radius = center - strokeWidth / 2;
   const circumference = 2 * Math.PI * radius;
   
-  // Progress is based on total amount contributed vs total target amount
-  const progress = Math.min(totalContributed / targetPoolAmount, 1);
+  // Progress is based on current amount vs total target amount
+  const progress = Math.min(currentAmount / targetPoolAmount, 1);
   const strokeDashoffset = circumference - progress * circumference;
 
   return (
@@ -201,7 +248,7 @@ export default function PoolDetailScreen() {
         {/* Squiggles/Progress Info */}
         <View className="items-center mb-8 w-full">
           <Text className="text-[20px] font-extrabold text-[#003840] mb-1">
-            ₱{Number(totalContributed).toLocaleString()} <Text className="text-[#6f797a] font-medium text-[16px]">/ ₱{Number(pool.total_payout_amount || 0).toLocaleString()}</Text>
+            ₱{currentAmount.toLocaleString()} <Text className="text-[#6f797a] font-medium text-[16px]">/ ₱{Number(pool.total_payout_amount || 0).toLocaleString()}</Text>
           </Text>
           <Text className="text-[14px] text-[#6f797a] font-medium text-center">
             Each cycle requires ₱{Number(dynamicContribution).toLocaleString()} every {pool.cycle_duration_days} days
@@ -241,16 +288,28 @@ export default function PoolDetailScreen() {
             <>
               <TouchableOpacity
                 activeOpacity={0.85}
+                onPress={handleContribute}
+                disabled={isProcessing}
                 className="flex-row items-center justify-center bg-[#006D77] py-4 rounded-[16px] shadow-sm mb-3"
+                style={{ opacity: isProcessing ? 0.7 : 1 }}
               >
-                <FontAwesome5 name="money-bill-wave" size={18} color="#ffffff" />
-                <Text className="text-[16px] font-bold text-white ml-2">
-                  Pay Contribution
-                </Text>
+                {isProcessing ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <FontAwesome5 name="money-bill-wave" size={18} color="#ffffff" />
+                    <Text className="text-[16px] font-bold text-white ml-2">
+                      Pay Contribution
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.85}
+                onPress={() => setWithdrawModalVisible(true)}
+                disabled={isProcessing}
                 className="flex-row items-center justify-center bg-white border border-[#e0e0e0] py-4 rounded-[16px] shadow-sm mb-6"
+                style={{ opacity: isProcessing ? 0.7 : 1 }}
               >
                 <Ionicons name="wallet-outline" size={18} color="#003840" />
                 <Text className="text-[16px] font-bold text-[#003840] ml-2">
@@ -266,10 +325,42 @@ export default function PoolDetailScreen() {
           <Text className="text-[18px] font-extrabold text-[#003840] mb-4">
             Recent Payouts
           </Text>
-          <View className="bg-white rounded-[16px] border border-[#f0f2f2] items-center justify-center py-10 shadow-sm">
-            <Ionicons name="receipt-outline" size={32} color="#b2ebf2" />
-            <Text className="text-[14px] text-[#6f797a] mt-3 font-medium">No recent payouts.</Text>
-          </View>
+          {pool.recent_payouts && pool.recent_payouts.length > 0 ? (
+            <View className="bg-white rounded-[16px] border border-[#f0f2f2] p-2 shadow-sm">
+              {pool.recent_payouts.map((payout: any, index: number) => (
+                <View
+                  key={payout.id}
+                  className={`flex-row justify-between items-center p-4 ${
+                    index !== pool.recent_payouts.length - 1
+                      ? "border-b border-[#f0f2f2]"
+                      : ""
+                  }`}
+                >
+                  <View className="flex-row items-center flex-1">
+                    <View className="w-10 h-10 rounded-full bg-[#e0f7fa] items-center justify-center mr-3">
+                      <Ionicons name="person" size={20} color="#006D77" />
+                    </View>
+                    <View>
+                      <Text className="text-[16px] font-bold text-[#003840]">
+                        {payout.pool_members?.users?.first_name || "Unknown"} {payout.pool_members?.users?.last_name || ""}
+                      </Text>
+                      <Text className="text-[12px] text-[#6f797a] mt-0.5">
+                        {new Date(payout.executed_at).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className="text-[16px] font-bold text-[#006D77]">
+                    ₱{Number(payout.amount).toLocaleString()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View className="bg-white rounded-[16px] border border-[#f0f2f2] items-center justify-center py-10 shadow-sm">
+              <Ionicons name="receipt-outline" size={32} color="#b2ebf2" />
+              <Text className="text-[14px] text-[#6f797a] mt-3 font-medium">No recent payouts.</Text>
+            </View>
+          )}
         </View>
 
       </ScrollView>
@@ -393,6 +484,58 @@ export default function PoolDetailScreen() {
                 </View>
               )}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Withdraw Modal */}
+      <Modal
+        visible={withdrawModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setWithdrawModalVisible(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white rounded-t-[32px] pt-6 px-6 pb-10">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-[22px] font-extrabold text-[#003840]">Withdraw Funds</Text>
+              <TouchableOpacity onPress={() => setWithdrawModalVisible(false)} className="p-1">
+                <Ionicons name="close-circle" size={32} color="#9aa4a5" />
+              </TouchableOpacity>
+            </View>
+            
+            <View className="mb-6">
+              <Text className="text-[14px] text-[#6f797a] font-medium mb-2">
+                Available to withdraw: ₱{currentAmount.toLocaleString()}
+              </Text>
+              <View className="flex-row items-center bg-[#f7f9f9] border border-[#e0e0e0] rounded-[16px] px-4 py-3">
+                <Text className="text-[20px] font-bold text-[#003840] mr-2">₱</Text>
+                <TextInput
+                  className="flex-1 text-[20px] font-bold text-[#003840]"
+                  placeholder="0.00"
+                  placeholderTextColor="#9aa4a5"
+                  keyboardType="decimal-pad"
+                  value={withdrawAmount}
+                  onChangeText={setWithdrawAmount}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleWithdraw}
+              disabled={isProcessing}
+              className="flex-row items-center justify-center bg-[#006D77] py-4 rounded-[16px] shadow-sm"
+              style={{ opacity: isProcessing ? 0.7 : 1 }}
+            >
+              {isProcessing ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text className="text-[16px] font-bold text-white">
+                  Confirm Withdrawal
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

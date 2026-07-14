@@ -6,41 +6,41 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link, useFocusEffect } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import Skeleton from "../../components/Skeleton";
+import { transactionApi } from "../../api";
 import "../../global.css";
-
-const MOCK_RECENT = [
-  {
-    id: "1",
-    title: "Top Up via Bank Transfer",
-    date: "Jul 9, 10:30 AM",
-    amount: "+₱5,000.00",
-    type: "in",
-    icon: "card",
-    color: "#006D77",
-  },
-  {
-    id: "2",
-    title: "Coffee Shop Payment",
-    date: "Jul 9, 08:15 AM",
-    amount: "-₱150.00", 
-    type: "out",
-    icon: "cafe",
-    color: "#E53E3E",
-  },
-];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user, profilePic } = useAuth();
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
   useFocusEffect(
     useCallback(() => {
-      setIsBalanceVisible(false);
-      setIsLoading(true);
-      const timer = setTimeout(() => setIsLoading(false), 1000);
-      return () => clearTimeout(timer);
+      let isActive = true;
+      const fetchHomeData = async () => {
+        setIsBalanceVisible(false);
+        setIsLoading(true);
+        try {
+          // Fetch history
+          const historyRes = await transactionApi.getHistory();
+          if (isActive && historyRes.success) {
+            // Get up to 3 most recent activities
+            setRecentActivities(historyRes.data.slice(0, 3));
+          }
+        } catch (error) {
+          console.error("Error fetching home data:", error);
+        } finally {
+          if (isActive) setIsLoading(false);
+        }
+      };
+      
+      fetchHomeData();
+      
+      return () => {
+        isActive = false;
+      };
     }, []),
   );
 
@@ -199,62 +199,62 @@ export default function HomeScreen() {
             </View>
 
             <View className="bg-white rounded-[24px] p-2 border border-gray-100 mx-1 shadow-sm">
-              {isLoading
-                ? [1, 2, 3].map((i, index) => (
-                    <View
-                      key={i}
-                      className={`flex-row items-center justify-between p-4 ${index !== 2 ? "border-b border-gray-50" : ""}`}
-                    >
-                      <View className="flex-row items-center flex-1 pr-4">
-                        <Skeleton className="w-12 h-12 rounded-full mr-4" />
-                        <View className="flex-1">
-                          <Skeleton className="w-32 h-5 mb-1" />
-                          <Skeleton className="w-20 h-4" />
-                        </View>
+              {isLoading ? (
+                [1, 2, 3].map((i, index) => (
+                  <View
+                    key={i}
+                    className={`flex-row items-center justify-between p-4 ${index !== 2 ? "border-b border-gray-50" : ""}`}
+                  >
+                    <View className="flex-row items-center flex-1 pr-4">
+                      <Skeleton className="w-12 h-12 rounded-full mr-4" />
+                      <View className="flex-1">
+                        <Skeleton className="w-32 h-5 mb-1" />
+                        <Skeleton className="w-20 h-4" />
                       </View>
-                      <Skeleton className="w-16 h-5" />
                     </View>
-                  ))
-                : MOCK_RECENT.map((tx, index) => (
-                    <Pressable
-                      key={tx.id}
-                      className={`flex-row items-center justify-between p-4 active:opacity-70 ${index !== MOCK_RECENT.length - 1 ? "border-b border-gray-50" : ""}`}
-                    >
-                      <View className="flex-row items-center flex-1 pr-4">
-                        <View
-                          className="w-12 h-12 rounded-full items-center justify-center mr-4"
-                          style={{ backgroundColor: `${tx.color}15` }}
-                        >
-                          <Ionicons
-                            name={tx.icon as any}
-                            size={24}
-                            color={tx.color}
-                          />
-                        </View>
-                        <View className="flex-1">
-                          <Text
-                            className="text-body-lg font-bold text-on-surface"
-                            numberOfLines={1}
-                          >
-                            {tx.title}
-                          </Text>
-                          <Text className="text-label-sm text-on-surface-variant mt-0.5">
-                            {tx.date}
-                          </Text>
-                        </View>
+                    <Skeleton className="w-16 h-5" />
+                  </View>
+                ))
+              ) : recentActivities.length > 0 ? (
+                recentActivities.map((item, index) => (
+                  <View 
+                    key={item.id || index}
+                    className={`flex-row items-center justify-between p-4 ${
+                      index !== recentActivities.length - 1 ? "border-b border-gray-50" : ""
+                    }`}
+                  >
+                    <View className="flex-row items-center flex-1 pr-4">
+                      <View 
+                        className="w-12 h-12 rounded-full items-center justify-center mr-4"
+                        style={{ backgroundColor: `${item.color}15` }}
+                      >
+                        <Ionicons name={item.icon as any} size={24} color={item.color} />
                       </View>
-                      <View className="items-end">
-                        <Text
-                          className="text-body-lg font-bold"
-                          style={{
-                            color: tx.type === "in" ? "#006D77" : "#1b1c1c",
-                          }}
-                        >
-                          {tx.amount}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
+                    <View className="flex-1">
+                      <Text className="text-[16px] font-bold text-on-surface" numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text 
+                        className="text-[14px] font-bold mt-1" 
+                        style={{ color: item.color }}
+                      >
+                        {item.amount}
+                      </Text>
+                      <Text className="text-[12px] text-on-surface-variant font-medium mt-0.5">
+                        {item.time} • {item.date}
+                      </Text>
+                    </View>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View className="p-8 items-center justify-center">
+                  <Ionicons name="receipt-outline" size={48} color="#9CA3AF" />
+                  <Text className="text-body-lg text-on-surface-variant mt-4 text-center">
+                    No recent activity
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </ScrollView>
